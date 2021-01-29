@@ -24,44 +24,43 @@ function App() {
   }
 
   useEffect(() => {
-    if (api && !polyWallet) {
-      web3Enable('PME Mock CDD Provider').then((exts) => {
-        const wallet = exts.filter(ext => ext.name === 'polywallet')[0]
-        if (!wallet) {
-          setError(new Error(`Please install Polymesh wallet extension from Chrome store`));
-          return;
-        }
-
-        setPolyWallet(wallet);
-
-        // @ts-ignore
-        wallet.network.subscribe(() => window.location.reload());
-
-        // @ts-ignore
-        wallet.network.get().then(network => setNetwork(network.name));
-
-        web3AccountsSubscribe(() => {
-          window.location.reload();
-        });
-
-        web3Accounts().then((accounts) => {
-          if (!accounts.length) {
-            setError(new Error('No accounts found in wallet extension'));
-            return;
-          }
-
-          console.log('>>> AccountId', accounts[0].address)
-          setAddress(accounts[0].address);
-
-          api.query.identity.keyToIdentityIds(accounts[0].address).then((linkedKeyInfo) => {
-            if (!linkedKeyInfo.isEmpty) {
-              setDid(linkedKeyInfo.toString());
+    if (!polyWallet) {
+      (new Promise((resolve, reject) => {
+        setTimeout(() => resolve(null), 1000)
+       })).then(() => {
+          web3Enable('PME Mock CDD Provider').then((exts) => {
+            const wallet = exts.filter(ext => ext.name === 'polywallet')[0]
+            if (!wallet) {
+              setError(new Error(`Please install Polymesh wallet extension from Chrome store`));
+              return;
             }
+
+            setPolyWallet(wallet);
+
+            // @ts-ignore
+            wallet.network.subscribe(() => window.location.reload());
+
+            // @ts-ignore
+            wallet.network.get().then(network => setNetwork(network.name));
+
+            web3AccountsSubscribe(() => {
+              window.location.reload();
+            });
+
+            web3Accounts().then((accounts) => {
+              if (!accounts.length) {
+                setError(new Error('No accounts found in wallet extension'));
+                return;
+              }
+
+              console.log('>>> AccountId', accounts[0].address)
+              setAddress(accounts[0].address);
+
+            })
           })
-        })
-      });
+       });
     }
-  }, [api, polyWallet]);
+  }, [polyWallet]);
 
   useEffect(() => {
     if (!api && network) {
@@ -77,6 +76,17 @@ function App() {
       });
     }
   }, [ api, network ])
+
+  useEffect(() => {
+    if (api && address) {
+      api.query.identity.keyToIdentityIds(address).then((linkedKeyInfo) => {
+        if (!linkedKeyInfo.isEmpty) {
+          setDid(linkedKeyInfo.toString());
+        }
+      })
+    }
+    
+  }, [api, address])
 
   const generateProof = (polyWallet: any) => {
     if (!ticker.length) {
@@ -143,14 +153,14 @@ function App() {
     return <div>Initalizing API instance ...</div>;
   }
 
-    return (
-      <div className="App">
-        <header className="App-header">
-          <img src={logo} className="App-logo" alt="logo" />
-          <Body />
-        </header>
-      </div> 
-    );
+  return (
+    <div className="App">
+      <header className="App-header">
+        <img src={logo} className="App-logo" alt="logo" />
+        <Body />
+      </header>
+    </div> 
+  );
   
 }
 
