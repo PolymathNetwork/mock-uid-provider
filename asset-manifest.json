@@ -1,24 +1,23 @@
 {
   "files": {
     "main.css": "/mock-uid-provider/static/css/main.8c8b27cf.chunk.css",
-    "main.js": "/mock-uid-provider/static/js/main.352082fe.chunk.js",
-    "main.js.map": "/mock-uid-provider/static/js/main.352082fe.chunk.js.map",
+    "main.js": "/mock-uid-provider/static/js/main.8041082a.chunk.js",
+    "main.js.map": "/mock-uid-provider/static/js/main.8041082a.chunk.js.map",
     "runtime-main.js": "/mock-uid-provider/static/js/runtime-main.89f89fc5.js",
     "runtime-main.js.map": "/mock-uid-provider/static/js/runtime-main.89f89fc5.js.map",
-    "static/js/2.49cd99b3.chunk.js": "/mock-uid-provider/static/js/2.49cd99b3.chunk.js",
-    "static/js/2.49cd99b3.chunk.js.map": "/mock-uid-provider/static/js/2.49cd99b3.chunk.js.map",
+    "static/js/2.5cc125ec.chunk.js": "/mock-uid-provider/static/js/2.5cc125ec.chunk.js",
+    "static/js/2.5cc125ec.chunk.js.map": "/mock-uid-provider/static/js/2.5cc125ec.chunk.js.map",
     "static/js/3.318d20bf.chunk.js": "/mock-uid-provider/static/js/3.318d20bf.chunk.js",
     "795eac38bcb04176fd60.module.wasm": "/mock-uid-provider/795eac38bcb04176fd60.module.wasm",
     "static/js/3.318d20bf.chunk.js.map": "/mock-uid-provider/static/js/3.318d20bf.chunk.js.map",
     "index.html": "/mock-uid-provider/index.html",
     "static/css/main.8c8b27cf.chunk.css.map": "/mock-uid-provider/static/css/main.8c8b27cf.chunk.css.map",
-    "static/js/2.49cd99b3.chunk.js.LICENSE.txt": "/mock-uid-provider/static/js/2.49cd99b3.chunk.js.LICENSE.txt",
-    "static/media/logo.103b5fa1.svg": "/mock-uid-provider/static/media/logo.103b5fa1.svg"
+    "static/js/2.5cc125ec.chunk.js.LICENSE.txt": "/mock-uid-provider/static/js/2.5cc125ec.chunk.js.LICENSE.txt"
   },
   "entrypoints": [
     "static/js/runtime-main.89f89fc5.js",
-    "static/js/2.49cd99b3.chunk.js",
+    "static/js/2.5cc125ec.chunk.js",
     "static/css/main.8c8b27cf.chunk.css",
-    "static/js/main.352082fe.chunk.js"
+    "static/js/main.8041082a.chunk.js"
   ]
 }
