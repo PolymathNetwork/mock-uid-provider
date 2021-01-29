@@ -2,6 +2,7 @@
   "name": "mock-uid-provider",
   "version": "0.1.0",
   "private": true,
+  "homepage": "https://polymathnetwork.github.io/mock-uid-provider",
   "dependencies": {
     "@polkadot/api": "2.0.*",
     "@polkadot/extension-dapp": "0.34.1",
@@ -37,7 +38,8 @@
     "build": "react-app-rewired build",
     "test": "react-app-rewired test",
     "eject": "react-scripts eject",
-    "crypto": "ts-node src/crypto.js"
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build"
   },
   "eslintConfig": {
     "extends": "react-app"
