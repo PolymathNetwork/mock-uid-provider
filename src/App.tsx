@@ -23,12 +23,14 @@ function App() {
     disappear && setTimeout(() => setInternalError(undefined), 3000);
   }
 
+  const setDisappearingError = (error: Error) => setError(error, true);
+
   useEffect(() => {
     if (!polyWallet) {
       (new Promise((resolve, reject) => {
         setTimeout(() => resolve(null), 1000)
        })).then(() => {
-          web3Enable('PME Mock CDD Provider').then((exts) => {
+          web3Enable('Mock CDD Provider').then((exts) => {
             const wallet = exts.filter(ext => ext.name === 'polywallet')[0]
             if (!wallet) {
               setError(new Error(`Please install Polymesh wallet extension from Chrome store`));
@@ -71,7 +73,6 @@ function App() {
         rpc: schema.rpc
       });
       apiPromise.isReady.then((api) => {
-        console.log('>>> Api', api);
         setApi(api);
       });
     }
@@ -97,8 +98,8 @@ function App() {
       .then((data: any) => {
         console.log('Data', data);
         setProof(data.proof);
-      }, setError)
-      .catch(setError);
+      }, setDisappearingError)
+      .catch(setDisappearingError);
   }
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -119,7 +120,7 @@ function App() {
       uid,
       did,
       network
-    }).then(console.log, setError).catch(setError);
+    }).then(console.log, setDisappearingError).catch(setDisappearingError);
   }
 
   const Body = () => {
@@ -135,13 +136,17 @@ function App() {
           <p>
             DID: {did || 'none'}
           </p>
-          { did && <button  onClick={() => provideUid(polyWallet, address, did)}>
+          { did && 
+          <>
+            <button  onClick={() => provideUid(polyWallet, address, did)}>
             Generate a dummy uID and import it to Polymesh wallet
-            </button> }<br />
-          <p>
-            <input name='ticker' value={ticker} type='text' onChange={handleChange} />
-            <button onClick={() => generateProof(polyWallet)}>Use stored uID to generate proof</button>
-          </p>
+            </button> 
+            <p>
+              <input name='ticker' value={ticker} type='text' onChange={handleChange} />
+              <button onClick={() => generateProof(polyWallet)}>Use stored uID to generate proof</button>
+            </p>
+          </>
+          } <br />
           { proof && <span>Proof: {JSON.stringify(proof, null, 3)} </span> }
           { error && <span>{error.message}</span>}
         </>
@@ -156,7 +161,6 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
         <Body />
       </header>
     </div> 
