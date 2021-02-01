@@ -116,7 +116,6 @@ function App() {
     console.log('>>> uid', uid);
 
     polyWallet.uid.provide({
-      address,
       uid,
       did,
       network
