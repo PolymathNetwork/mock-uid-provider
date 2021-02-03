@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import logo from './logo.svg';
 import './App.css';
 import { web3Enable, web3Accounts, web3AccountsSubscribe } from '@polkadot/extension-dapp';
 import { ApiPromise, WsProvider } from '@polkadot/api';
@@ -25,12 +24,19 @@ function App() {
 
   const setDisappearingError = (error: Error) => setError(error, true);
 
+  const reset = () => {
+    setDid(undefined);
+    setProof('');
+    setInternalError(undefined);
+    setTicker('');
+  }
+
   useEffect(() => {
     if (!polyWallet) {
-      (new Promise((resolve, reject) => {
-        setTimeout(() => resolve(null), 1000)
+      (new Promise((resolve) => {
+        setTimeout(() => resolve(null), 750)
        })).then(() => {
-          web3Enable('Mock CDD Provider').then((exts) => {
+          web3Enable('Mock uID Provider').then((exts) => {
             const wallet = exts.filter(ext => ext.name === 'polywallet')[0]
             if (!wallet) {
               setError(new Error(`Please install Polymesh wallet extension from Chrome store`));
@@ -40,13 +46,15 @@ function App() {
             setPolyWallet(wallet);
 
             // @ts-ignore
-            wallet.network.subscribe(() => window.location.reload());
+            wallet.network.subscribe((network) => {
+              setNetwork(network.name);
+            });
 
             // @ts-ignore
             wallet.network.get().then(network => setNetwork(network.name));
 
-            web3AccountsSubscribe(() => {
-              window.location.reload();
+            web3AccountsSubscribe((accounts) => {
+              setAddress(accounts[0].address)
             });
 
             web3Accounts().then((accounts) => {
@@ -55,31 +63,38 @@ function App() {
                 return;
               }
 
-              console.log('>>> AccountId', accounts[0].address)
               setAddress(accounts[0].address);
-
             })
           })
        });
     }
-  }, [polyWallet]);
+  }, [ polyWallet ]);
 
   useEffect(() => {
-    if (!api && network) {
-      const provider = new WsProvider(networkURLs[network]);
+    if (network) {
+      reset();
+
+      const url = networkURLs[network];
+      if (!url) {
+        setError(new Error(`Unknown network: ${network}`));
+      }
+
       const apiPromise = new ApiPromise({
-        provider,
+        provider: new WsProvider(url),
         types: schema.types,
         rpc: schema.rpc
       });
+
       apiPromise.isReady.then((api) => {
         setApi(api);
       });
     }
-  }, [ api, network ])
+  }, [ network ])
 
   useEffect(() => {
     if (api && address) {
+      reset();
+
       api.query.identity.keyToIdentityIds(address).then((linkedKeyInfo) => {
         if (!linkedKeyInfo.isEmpty) {
           setDid(linkedKeyInfo.toString());
@@ -87,7 +102,7 @@ function App() {
       })
     }
     
-  }, [api, address])
+  }, [ api, address ])
 
   const generateProof = (polyWallet: any) => {
     if (!ticker.length) {
