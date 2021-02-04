@@ -58,6 +58,7 @@ function App() {
             });
 
             web3Accounts().then((accounts) => {
+              console.log('Address change', accounts[0].address)
               if (!accounts.length) {
                 setError(new Error('No accounts found in wallet extension'));
                 return;
@@ -122,7 +123,7 @@ function App() {
     setTicker(event.target.value);
   }
 
-  const provideUid = async (polyWallet: any, address: string, did: string) => {
+  const provideUid = async (polyWallet: any, did: string) => {
     console.log('Generating uID...');
     const crypto = await import('pkg')
     const mockUIdHex = `0x${crypto.process_create_mocked_investor_uid(did)}`;
@@ -152,7 +153,7 @@ function App() {
           </p>
           { did && 
           <>
-            <button  onClick={() => provideUid(polyWallet, address, did)}>
+            <button  onClick={() => provideUid(polyWallet, did)}>
             Generate a dummy uID and import it to Polymesh wallet
             </button> 
             <p>
