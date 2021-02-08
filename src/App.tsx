@@ -125,7 +125,7 @@ function App() {
 
   const provideUid = async (polyWallet: any, did: string) => {
     console.log('Generating uID...');
-    const crypto = await import('pkg')
+    const crypto = await import('@polymathnetwork/confidential-identity')
     const mockUIdHex = `0x${crypto.process_create_mocked_investor_uid(did)}`;
     const uid = uuidStringify(hexToU8a(mockUIdHex));
 
