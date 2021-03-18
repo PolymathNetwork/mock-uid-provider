@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import './App.css';
-import { web3Enable, web3Accounts, web3AccountsSubscribe } from '@polkadot/extension-dapp';
+import { web3Enable, web3Accounts, web3AccountsSubscribe, web3FromAddress } from '@polkadot/extension-dapp';
 import { ApiPromise, WsProvider } from '@polkadot/api';
 import schema from './polymesh_schema.json';
 import { hexToU8a } from '@polkadot/util';
@@ -31,6 +31,13 @@ function App() {
     setTicker('');
   }
 
+  const _setAddress = async (address: string) => {
+    const injector = await web3FromAddress(address);
+    console.log('injector', injector);
+    setAddress(address);
+
+  }
+
   useEffect(() => {
     if (!polyWallet) {
       (new Promise((resolve) => {
@@ -54,17 +61,17 @@ function App() {
             wallet.network.get().then(network => setNetwork(network.name));
 
             web3AccountsSubscribe((accounts) => {
-              setAddress(accounts[0].address)
-            });
+              _setAddress(accounts[0].address)
+            }, {ss58Format: 12});
 
-            web3Accounts().then((accounts) => {
+            web3Accounts({ss58Format: 12}).then((accounts) => {
               console.log('Address change', accounts[0].address)
               if (!accounts.length) {
                 setError(new Error('No accounts found in wallet extension'));
                 return;
               }
 
-              setAddress(accounts[0].address);
+              _setAddress(accounts[0].address);
             })
           })
        });
