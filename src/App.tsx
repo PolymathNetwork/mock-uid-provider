@@ -6,6 +6,7 @@ import schema from './polymesh_schema.json';
 import { hexToU8a } from '@polkadot/util';
 import { stringify as uuidStringify } from 'uuid';
 import { networkURLs } from './constants';
+import { InjectedAccountWithMeta } from '@polkadot/extension-inject/types';
 
 function App() {
   const [polyWallet, setPolyWallet] = useState<any>(null);
@@ -34,19 +35,25 @@ function App() {
     setUid('');
   }
 
-  const _setAddress = async (address: string) => {
-    const injector = await web3FromAddress(address);
-    console.log('injector', injector);
-    setAddress(address);
-
-  }
 
   useEffect(() => {
+    const _accounts = (accounts: InjectedAccountWithMeta[]) => {
+      if (accounts && accounts.length) {
+        setAddress(accounts[0].address)
+      }
+      else {
+        setError(new Error('No accounts found in wallet extension'));
+        return;
+      }
+    }
+
+    
     if (!polyWallet) {
       (new Promise((resolve) => {
-        setTimeout(() => resolve(null), 750)
+        setTimeout(() => resolve(null), 1000)
        })).then(() => {
           web3Enable('Mock uID Provider').then((exts) => {
+            console.log('>>>> Extss', exts)
             const wallet = exts.filter(ext => ext.name === 'polywallet')[0]
             if (!wallet) {
               setError(new Error(`Please install Polymesh wallet extension from Chrome store`));
@@ -63,26 +70,16 @@ function App() {
             // @ts-ignore
             wallet.network.get().then(network => setNetwork(network.name));
 
-            web3AccountsSubscribe((accounts) => {
-              _setAddress(accounts[0].address)
-            }, {ss58Format: 12});
+            web3AccountsSubscribe(_accounts, {ss58Format: 12});
 
-            web3Accounts({ss58Format: 12}).then((accounts) => {
-              console.log('Address change', accounts[0].address)
-              if (!accounts.length) {
-                setError(new Error('No accounts found in wallet extension'));
-                return;
-              }
-
-              _setAddress(accounts[0].address);
-            })
+            web3Accounts({ss58Format: 12}).then(_accounts)
           })
        });
     }
-  }, [ polyWallet ]);
+  }, [polyWallet]);
 
   useEffect(() => {
-    if (network) {
+    if (network && address) {
       reset();
 
       const url = networkURLs[network];
@@ -90,17 +87,20 @@ function App() {
         setError(new Error(`Unknown network: ${network}`));
       }
 
-      const apiPromise = new ApiPromise({
-        provider: new WsProvider(url),
-        types: schema.types,
-        rpc: schema.rpc
-      });
-
-      apiPromise.isReady.then((api) => {
-        setApi(api);
-      });
+      web3FromAddress(address).then((injector) => {
+        const apiPromise = new ApiPromise({
+          provider: new WsProvider(url),
+          types: schema.types,
+          rpc: schema.rpc,
+          signer: injector.signer
+        });
+  
+        apiPromise.isReady.then((api) => {
+          setApi(api);
+        });
+      })
     }
-  }, [ network ])
+  }, [ network, address ])
 
   useEffect(() => {
     if (api && address) {
