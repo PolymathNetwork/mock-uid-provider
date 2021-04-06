@@ -163,6 +163,8 @@ function App() {
     }).then(console.log, setDisappearingError).catch(setDisappearingError);
   }
 
+  const isDev = network !== 'itn';
+
   const Body = () => {
     if (polyWallet && api) {
       return (
@@ -178,9 +180,10 @@ function App() {
           </p>
           { did && 
           <>
-            <button  onClick={() => provideUidFromDid(polyWallet, did)}>
-            Generate a dummy uID and import it to Polymesh wallet
-            </button> 
+            { isDev && <button  onClick={() => provideUidFromDid(polyWallet, did)}>
+                Generate a dummy uID and import it to Polymesh wallet
+              </button>
+            }
             <p>
               <input name='uid' value={uid} type='text' onChange={handleUidChange} />
               <button onClick={() => provideUid(polyWallet, did, uid)}>Enter uID and import it to Polymesh wallet</button>
