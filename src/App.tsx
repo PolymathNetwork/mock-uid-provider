@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import './App.css';
-import { web3Enable, web3Accounts, web3AccountsSubscribe, web3FromAddress } from '@polkadot/extension-dapp';
+import { web3Enable, web3FromSource, web3FromAddress } from '@polkadot/extension-dapp';
+import { encodeAddress, decodeAddress } from '@polkadot/util-crypto';
 import { ApiPromise, WsProvider } from '@polkadot/api';
 import schema from './polymesh_schema.json';
 import { hexToU8a } from '@polkadot/util';
 import { stringify as uuidStringify } from 'uuid';
 import { networkURLs } from './constants';
-import { InjectedAccountWithMeta } from '@polkadot/extension-inject/types';
+import { InjectedAccount } from '@polkadot/extension-inject/types';
 
 function App() {
   const [polyWallet, setPolyWallet] = useState<any>(null);
@@ -37,9 +38,13 @@ function App() {
 
 
   useEffect(() => {
-    const _accounts = (accounts: InjectedAccountWithMeta[]) => {
+    const _accounts = (accounts: InjectedAccount[]) => {
       if (accounts && accounts.length) {
-        setAddress(accounts[0].address)
+        console.log('__accounts', accounts);
+        // @TODO Fractal
+        // Recode address with ITN prefix (or Alcyone's, according to selected network).
+        const address = encodeAddress(decodeAddress(accounts[0].address), 12);
+        setAddress(address);
       }
       else {
         setError(new Error('No accounts found in wallet extension'));
@@ -50,31 +55,41 @@ function App() {
     
     if (!polyWallet) {
       (new Promise((resolve) => {
+        // @TODO Fractal
+        // There's a chance the wallet's injected API is not ready as soon as DOM loads.
+        // Force delay web3Enable.
         setTimeout(() => resolve(null), 1000)
-       })).then(() => {
-          web3Enable('Mock uID Provider').then((exts) => {
-            console.log('>>>> Extss', exts)
-            const wallet = exts.filter(ext => ext.name === 'polywallet')[0]
-            if (!wallet) {
-              setError(new Error(`Please install Polymesh wallet extension from Chrome store`));
-              return;
-            }
+      })).then(() => {
+        web3Enable('Mock uID Provider').then((exts) => {
+          const meshExts = exts.filter(ext => ext.name === 'polywallet')
+          console.log('>>>> Extension', meshExts)
 
-            setPolyWallet(wallet);
+          if (!meshExts.length) {
+            setError(new Error(`Please install Polymesh wallet extension from Chrome store`));
+            return;
+          }
 
-            // @ts-ignore
-            wallet.network.subscribe((network) => {
-              setNetwork(network.name);
-            });
+          const wallet = meshExts[0];
+          setPolyWallet(wallet);
 
-            // @ts-ignore
-            wallet.network.get().then(network => setNetwork(network.name));
+          // @ts-ignore
+          wallet.network.subscribe((network) => {
+            console.log('setNetwork', network.name)
+            setNetwork(network.name);
+          });
 
-            web3AccountsSubscribe(_accounts, {ss58Format: 12});
+          // @ts-ignore
+          wallet.network.get().then(network => setNetwork(network.name));
 
-            web3Accounts({ss58Format: 12}).then(_accounts)
-          })
-       });
+          // @TODO Fractal
+          // Replace calls to web3AccountsSubscribe and web3Accounts with 
+          // the following calls, respectively.
+          // Note that we cannot specify the ss58Format in this case, so we'll
+          // have to recode addresses before consumption.
+          wallet.accounts.subscribe(_accounts);
+          wallet.accounts.get().then(_accounts);
+        })
+      });
     }
   }, [polyWallet]);
 
@@ -141,6 +156,8 @@ function App() {
   const provideUid = async (polyWallet: any, did: string, uid: string) => {
     console.log('>>> uid', uid);
 
+    // @TODO Fractal
+    // Make sure to show any errors thrown by uid.provide.
     polyWallet.uid.provide({
       uid,
       did,
