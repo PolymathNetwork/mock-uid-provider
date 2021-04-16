@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import './App.css';
-import { web3Enable, web3FromSource, web3FromAddress } from '@polkadot/extension-dapp';
+import { web3Enable } from '@polkadot/extension-dapp';
 import { encodeAddress, decodeAddress } from '@polkadot/util-crypto';
 import { ApiPromise, WsProvider } from '@polkadot/api';
 import schema from './polymesh_schema.json';
@@ -15,6 +15,7 @@ function App() {
   const [address, setAddress] = useState<string>('');
   const [api, setApi] = useState<ApiPromise | undefined>();
   const [did, setDid] = useState<string | undefined>();
+  const [uidSet, setUidSet] = useState<boolean | undefined>(undefined);
   const [network, setNetwork] = useState<string | undefined>();
   const [error, setInternalError] = useState<Error | undefined>();
   const [ticker, setTicker] = useState<string>('');
@@ -34,6 +35,7 @@ function App() {
     setInternalError(undefined);
     setTicker('');
     setUid('');
+    setUidSet(undefined);
   }
 
 
@@ -94,7 +96,7 @@ function App() {
   }, [polyWallet]);
 
   useEffect(() => {
-    if (network && address) {
+    if (network) {
       reset();
 
       const url = networkURLs[network];
@@ -102,25 +104,21 @@ function App() {
         setError(new Error(`Unknown network: ${network}`));
       }
 
-      web3FromAddress(address).then((injector) => {
-        const apiPromise = new ApiPromise({
-          provider: new WsProvider(url),
-          types: schema.types,
-          rpc: schema.rpc,
-          signer: injector.signer
-        });
-  
-        apiPromise.isReady.then((api) => {
-          setApi(api);
-        });
-      })
+
+      const apiPromise = new ApiPromise({
+        provider: new WsProvider(url),
+        types: schema.types,
+        rpc: schema.rpc,
+      });
+
+      apiPromise.isReady.then((api) => {
+        setApi(api);
+      });
     }
-  }, [ network, address ])
+  }, [ network ])
 
   useEffect(() => {
     if (api && address) {
-      reset();
-
       api.query.identity.keyToIdentityIds(address).then((linkedKeyInfo) => {
         if (!linkedKeyInfo.isEmpty) {
           setDid(linkedKeyInfo.toString());
@@ -129,6 +127,14 @@ function App() {
     }
     
   }, [ api, address ])
+
+  useEffect(() => {
+    if (!!address && !!network && polyWallet) {
+      polyWallet.uid.isSet().then((data: boolean) => {
+        setUidSet(data)
+      });
+    }
+  }, [address, network, polyWallet])
 
   const generateProof = (polyWallet: any) => {
     if (!ticker.length) {
@@ -195,6 +201,9 @@ function App() {
           <p>
             DID: {did || 'none'}
           </p>
+          { uidSet !== undefined && <p>
+            UID: {uidSet ? 'true' : 'false'}
+          </p> }
           { did && 
           <>
             { isDev && <button  onClick={() => provideUidFromDid(polyWallet, did)}>
