@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import './App.css';
-import { web3Enable } from '@polkadot/extension-dapp';
+import { web3Accounts, web3AccountsSubscribe, web3Enable } from '@polkadot/extension-dapp';
 import { encodeAddress, decodeAddress } from '@polkadot/util-crypto';
 import { ApiPromise, WsProvider } from '@polkadot/api';
 import schema from './polymesh_schema.json';
 import { hexToU8a } from '@polkadot/util';
 import { stringify as uuidStringify } from 'uuid';
 import { networkURLs } from './constants';
-import { InjectedAccount } from '@polkadot/extension-inject/types';
+import { InjectedAccountWithMeta } from '@polkadot/extension-inject/types';
 
 function App() {
   const [polyWallet, setPolyWallet] = useState<any>(null);
@@ -40,7 +40,10 @@ function App() {
 
 
   useEffect(() => {
-    const _accounts = (accounts: InjectedAccount[]) => {
+    const _accounts = (accounts: InjectedAccountWithMeta[]) => {
+      // @TODO Fractal
+      // Filter accounts based on their source.
+      accounts = accounts.filter(account => account.meta.source === 'polywallet');
       if (accounts && accounts.length) {
         console.log('__accounts', accounts);
         // @TODO Fractal
@@ -88,8 +91,8 @@ function App() {
           // the following calls, respectively.
           // Note that we cannot specify the ss58Format in this case, so we'll
           // have to recode addresses before consumption.
-          wallet.accounts.subscribe(_accounts);
-          wallet.accounts.get().then(_accounts);
+          web3AccountsSubscribe(_accounts);
+          web3Accounts().then(_accounts);
         })
       });
     }
