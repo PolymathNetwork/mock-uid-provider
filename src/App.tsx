@@ -20,6 +20,7 @@ function App() {
   const [error, setInternalError] = useState<Error | undefined>();
   const [ticker, setTicker] = useState<string>('');
   const [uid, setUid] = useState<string>('');
+  const [importedUid, setImportedUid] = useState<string>('');
   
 
   const setError = (error: Error, disappear: boolean = false) => {
@@ -174,6 +175,12 @@ function App() {
     }).then(console.log, setDisappearingError).catch(setDisappearingError);
   }
 
+  const readUid = async (polyWallet: any) => {
+    polyWallet.uid.read()
+      .then((res: {uid: string, id: number}) => setImportedUid(res.uid), setDisappearingError)
+      .catch(setDisappearingError);
+  }
+
   const provideUidFromDid = async (polyWallet: any, did: string) => {
     console.log('Generating uID...');
     const crypto = await import('@polymathnetwork/confidential-identity')
@@ -207,12 +214,20 @@ function App() {
           { uidSet !== undefined && <p>
             UID: {uidSet ? 'true' : 'false'}
           </p> }
+          {importedUid && <p>
+            UID value: {importedUid}
+          </p> }
           { did && 
           <>
             { isDev && <button  onClick={() => provideUidFromDid(polyWallet, did)}>
                 Generate a dummy uID and import it to Polymesh wallet
               </button>
             }
+            <p>
+              <button onClick={() => readUid(polyWallet)}>Read uId from wallet</button>
+
+            </p>
+
             <p>
               <input name='uid' value={uid} type='text' onChange={handleUidChange} />
               <button onClick={() => provideUid(polyWallet, did, uid)}>Enter uID and import it to Polymesh wallet</button>
