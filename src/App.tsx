@@ -202,7 +202,7 @@ function App() {
     if (polyWallet && api) {
       return (
         <>
-          <p>
+          <p style={{color: "tomato"}}>
             Network: {network || 'unknown'}
           </p>
           <p>
