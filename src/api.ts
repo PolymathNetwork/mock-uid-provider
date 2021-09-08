@@ -1,5 +1,6 @@
 import { ApiPromise, WsProvider } from '@polkadot/api';
 import { web3Accounts, web3Enable } from '@polkadot/extension-dapp';
+import { Codec } from '@polkadot/types/types';
 import { networkURLs } from './constants';
 import { polymesh_schema } from './schema';
 import { NetworkName } from './types';
@@ -34,4 +35,10 @@ export async function createApi(network: NetworkName) {
   const api = await apiPromise.isReady;
 
   return api;
+}
+
+export async function getDid(api: ApiPromise, address: string) {
+  const didCodec = await api.query.identity.keyToIdentityIds(address);
+
+  return (didCodec as Codec).toString();
 }

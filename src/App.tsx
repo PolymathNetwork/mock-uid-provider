@@ -18,6 +18,7 @@ export function App() {
 
   const onNetworkChange = async (network: NetworkMeta) => {
     setApi(undefined);
+    setDid(undefined);
 
     const api = await createApi(network.name);
 
@@ -25,55 +26,54 @@ export function App() {
     setNetwork(network);
   };
 
+  const onAccountChange = (account: InjectedAccountWithMeta) => {
+    setAccount(account);
+  };
+
+  // Connect polymesh wallet on mount
   useEffect(() => {
-    const initialize = async () => {
-      try {
-        const polyWallet = await connectPolymeshWallet();
-
-        // @ts-ignore
-        const network = await polyWallet.network.get();
-
-        const account = await getSelectedAccount();
-        const api = await createApi(network.name);
-        const didCodec = await api.query.identity.keyToIdentityIds(
-          account.address
-        );
-
-        // @ts-ignore
-        polyWallet.network.subscribe(onNetworkChange);
-
-        web3AccountsSubscribe((accounts) => {
-          if (accounts.length) setAccount(accounts[0]);
-        });
-
-        setWallet(polyWallet);
-        setNetwork(network);
-        setAccount(account);
-        setApi(api);
-        setDid((didCodec as Codec).toString());
-      } catch (error) {
-        console.error(error);
-      }
-    };
-
-    initialize();
+    connectPolymeshWallet()
+      .then((polyWallet) => setWallet(polyWallet))
+      .catch((error) => console.error(error));
   }, []);
 
-  // useEffect(() => {
-  //   if (!api || !account) return;
+  // Set selected account and subscribe to account changes
+  useEffect(() => {
+    if (!wallet) return;
 
-  //   api.query.identity
-  //     .keyToIdentityIds(account.address)
-  //     .then((value: unknown) => {
-  //       console.log({ did: (value as Codec).toString() });
-  //     });
-  // }, [api, account]);
+    // @ts-ignore
+    wallet.network.get().then(onNetworkChange);
+
+    // @ts-ignore
+    wallet.network.subscribe(onNetworkChange);
+
+    getSelectedAccount()
+      .then(onAccountChange)
+      .catch((error) => console.error(error));
+
+    web3AccountsSubscribe((accounts) => {
+      if (accounts.length) onAccountChange(accounts[0]);
+    });
+  }, [wallet]);
+
+  // Set DID
+  useEffect(() => {
+    if (!api || !account) return;
+
+    api.query.identity
+      .keyToIdentityIds(account.address)
+      .then((value: unknown) => {
+        const codec = value as Codec;
+
+        setDid(codec.isEmpty ? undefined : codec.toString());
+      });
+  }, [api, account]);
 
   return api ? (
     <>
-      <h2>network: {network?.name}</h2>
-      <h2>address: {account?.address}</h2>
-      <h2>did: {did}</h2>
+      <h2>Network: {network?.name}</h2>
+      <h2>Account: {account?.address}</h2>
+      <h2>DID: {did}</h2>
     </>
   ) : (
     <h1>Loading...</h1>
