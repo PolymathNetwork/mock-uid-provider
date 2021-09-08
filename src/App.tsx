@@ -123,7 +123,7 @@ function App() {
 
   useEffect(() => {
     if (api && address) {
-      api.query.identity.keyToIdentityIds(address).then((linkedKeyInfo) => {
+      api.query.identity.keyToIdentityIds(address).then((linkedKeyInfo: any) => {
         if (!linkedKeyInfo.isEmpty) {
           setDid(linkedKeyInfo.toString());
         }
