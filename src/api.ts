@@ -1,4 +1,8 @@
+import { ApiPromise, WsProvider } from '@polkadot/api';
 import { web3Accounts, web3Enable } from '@polkadot/extension-dapp';
+import { networkURLs } from './constants';
+import { polymesh_schema } from './schema';
+import { NetworkName } from './types';
 
 export async function connectPolymeshWallet() {
   const extensions = await web3Enable('Mock uID Provider');
@@ -18,4 +22,16 @@ export async function getSelectedAccount() {
     throw new Error('No accounts found in Polymesh wallet');
 
   return accounts[0];
+}
+
+export async function createApi(network: NetworkName) {
+  const apiPromise = new ApiPromise({
+    provider: new WsProvider(networkURLs[network]),
+    types: polymesh_schema.types,
+    rpc: polymesh_schema.rpc,
+  });
+
+  const api = await apiPromise.isReady;
+
+  return api;
 }
