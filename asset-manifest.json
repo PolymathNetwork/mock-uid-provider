@@ -1,23 +1,23 @@
 {
   "files": {
-    "main.css": "/mock-uid-provider/static/css/main.8c8b27cf.chunk.css",
-    "main.js": "/mock-uid-provider/static/js/main.646c368d.chunk.js",
-    "main.js.map": "/mock-uid-provider/static/js/main.646c368d.chunk.js.map",
-    "runtime-main.js": "/mock-uid-provider/static/js/runtime-main.2cedd3a3.js",
-    "runtime-main.js.map": "/mock-uid-provider/static/js/runtime-main.2cedd3a3.js.map",
-    "static/js/2.50527930.chunk.js": "/mock-uid-provider/static/js/2.50527930.chunk.js",
-    "static/js/2.50527930.chunk.js.map": "/mock-uid-provider/static/js/2.50527930.chunk.js.map",
-    "static/js/3.437fb86d.chunk.js": "/mock-uid-provider/static/js/3.437fb86d.chunk.js",
-    "7a0f7f354cb6c47c80e7.module.wasm": "/mock-uid-provider/7a0f7f354cb6c47c80e7.module.wasm",
-    "static/js/3.437fb86d.chunk.js.map": "/mock-uid-provider/static/js/3.437fb86d.chunk.js.map",
+    "main.css": "/mock-uid-provider/static/css/main.6dea0f05.chunk.css",
+    "main.js": "/mock-uid-provider/static/js/main.0d4d75c4.chunk.js",
+    "main.js.map": "/mock-uid-provider/static/js/main.0d4d75c4.chunk.js.map",
+    "runtime-main.js": "/mock-uid-provider/static/js/runtime-main.95012019.js",
+    "runtime-main.js.map": "/mock-uid-provider/static/js/runtime-main.95012019.js.map",
+    "static/js/2.6f136c8d.chunk.js": "/mock-uid-provider/static/js/2.6f136c8d.chunk.js",
+    "static/js/2.6f136c8d.chunk.js.map": "/mock-uid-provider/static/js/2.6f136c8d.chunk.js.map",
+    "static/js/3.2b1c1819.chunk.js": "/mock-uid-provider/static/js/3.2b1c1819.chunk.js",
+    "eed2f2580ab694779120.module.wasm": "/mock-uid-provider/eed2f2580ab694779120.module.wasm",
+    "static/js/3.2b1c1819.chunk.js.map": "/mock-uid-provider/static/js/3.2b1c1819.chunk.js.map",
     "index.html": "/mock-uid-provider/index.html",
-    "static/css/main.8c8b27cf.chunk.css.map": "/mock-uid-provider/static/css/main.8c8b27cf.chunk.css.map",
-    "static/js/2.50527930.chunk.js.LICENSE.txt": "/mock-uid-provider/static/js/2.50527930.chunk.js.LICENSE.txt"
+    "static/css/main.6dea0f05.chunk.css.map": "/mock-uid-provider/static/css/main.6dea0f05.chunk.css.map",
+    "static/js/2.6f136c8d.chunk.js.LICENSE.txt": "/mock-uid-provider/static/js/2.6f136c8d.chunk.js.LICENSE.txt"
   },
   "entrypoints": [
-    "static/js/runtime-main.2cedd3a3.js",
-    "static/js/2.50527930.chunk.js",
-    "static/css/main.8c8b27cf.chunk.css",
-    "static/js/main.646c368d.chunk.js"
+    "static/js/runtime-main.95012019.js",
+    "static/js/2.6f136c8d.chunk.js",
+    "static/css/main.6dea0f05.chunk.css",
+    "static/js/main.0d4d75c4.chunk.js"
   ]
 }
