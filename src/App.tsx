@@ -22,6 +22,7 @@ export function App() {
   const [account, setAccount] = useState<InjectedAccountWithMeta>();
   const [api, setApi] = useState<ApiPromise>();
   const [did, setDid] = useState<string>();
+  const [hasUid, setHasUid] = useState(false);
 
   const provideUidFromDid = async () => {
     if (!wallet || !did) return;
@@ -105,9 +106,9 @@ export function App() {
     apiPromise.isReady.then((api) => setApi(api));
   }, [network]);
 
-  // Set DID
+  // Set DID and check if uID is set
   useEffect(() => {
-    if (!api || !account) return;
+    if (!api || !account || !wallet) return;
 
     api.query.identity
       .keyToIdentityIds(account.address)
@@ -116,13 +117,19 @@ export function App() {
 
         setDid(codec.isEmpty ? undefined : codec.toString());
       });
-  }, [api, account]);
+
+    // @ts-ignore
+    wallet.uid.isSet().then((hasUid: boolean) => {
+      setHasUid(hasUid);
+    });
+  }, [api, account, wallet]);
 
   return api && network && account ? (
     <>
       <div>network: {network.name}</div>
       <div>address: {account.address}</div>
       <div>DID: {did}</div>
+      <div>uID: {hasUid ? 'Has uID' : 'Does not have uID'}</div>
 
       {network.name !== 'itn' && (
         <div>
@@ -132,9 +139,11 @@ export function App() {
         </div>
       )}
 
-      <div>
-        <button onClick={readUid}>Read uID from Polymesh wallet</button>
-      </div>
+      {hasUid && (
+        <div>
+          <button onClick={readUid}>Read uID from Polymesh wallet</button>
+        </div>
+      )}
     </>
   ) : (
     <h1>Loading...</h1>
