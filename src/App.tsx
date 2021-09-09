@@ -15,6 +15,27 @@ import { hexToU8a } from '@polkadot/util';
 import { stringify as uuidStringify } from 'uuid';
 import { polymesh_schema } from './schema';
 import { networkURLs } from './constants';
+import {
+  polyTheme,
+  Text,
+  Heading,
+  Button,
+  Box,
+  Input,
+  PolyThemeProvider,
+  Grid,
+  Flex,
+  styled,
+} from '@polymathnetwork/ui-blocks';
+
+const CodeText = styled(Text)`
+  font-size: 16px;
+`;
+
+type Message = {
+  isError?: boolean;
+  text: string;
+};
 
 export function App() {
   const [wallet, setWallet] = useState<InjectedExtension>();
@@ -25,8 +46,7 @@ export function App() {
   const [hasUid, setHasUid] = useState(false);
   const [inputUid, setInputUid] = useState('');
   const [ticker, setTicker] = useState('');
-  const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
+  const [message, setMessage] = useState<Message>();
 
   const provideUidFromDid = async () => {
     if (!wallet || !did) return;
@@ -42,18 +62,28 @@ export function App() {
         did,
         network: network?.name,
       })
+      .then(() =>
+        setMessage({ text: 'uID successfully imported to Polymesh wallet' })
+      )
       .catch((error: any) => {
-        setError(error.message);
+        setMessage({
+          isError: true,
+          text: error.message,
+        });
       });
   };
 
-  const readUid = async () => {
+  const readUid = () => {
     // @ts-ignore
-    const { uid } = await wallet.uid.read().catch((error) => {
-      setError(error.message);
-    });
-
-    setMessage(uid ? `uID: ${uid}` : 'uID not found');
+    wallet.uid
+      .read()
+      .then((uid: any) => setMessage({ text: `uID: ${uid.uid}` }))
+      .catch((error: any) => {
+        setMessage({
+          isError: true,
+          text: error.message,
+        });
+      });
   };
 
   const provideInputUid = async () => {
@@ -64,8 +94,15 @@ export function App() {
         did,
         network: network?.name,
       })
-      .then(() => setMessage('uID successfully imported to Polymesh wallet'))
-      .catch((error: any) => setError(error.message));
+      .then(() =>
+        setMessage({ text: 'uID successfully imported to Polymesh wallet' })
+      )
+      .catch((error: any) =>
+        setMessage({
+          isError: true,
+          text: error.message,
+        })
+      );
   };
 
   const generateProof = async () => {
@@ -73,9 +110,14 @@ export function App() {
     wallet.uid
       .requestProof({ ticker })
       .then((proof: Object) => {
-        setMessage(JSON.stringify(proof, null, 2));
+        setMessage({ text: JSON.stringify(proof, null, 2) });
       })
-      .catch((error: any) => setError(error.message));
+      .catch((error: any) =>
+        setMessage({
+          isError: true,
+          text: error.message,
+        })
+      );
   };
 
   const updateInputUid = (event: ChangeEvent<HTMLInputElement>) => {
@@ -156,65 +198,112 @@ export function App() {
 
   // Clear messages, errors, and inputs on certain state changes
   useEffect(() => {
-    setMessage('');
-    setError('');
+    setMessage(undefined);
     setInputUid('');
     setTicker('');
   }, [api, account, wallet, network]);
 
-  return api && network && account ? (
-    <>
-      <div>network: {network.name}</div>
-      <div>address: {account.address}</div>
-      <div>DID: {did}</div>
-      <div>uID: {hasUid ? 'Has uID' : 'Does not have uID'}</div>
+  return (
+    <PolyThemeProvider theme={polyTheme}>
+      <Box variant="basic">
+        {api && network && account ? (
+          <>
+            <Grid
+              variant="basic"
+              margin="0 0 l"
+              padding="0"
+              cols="min-content auto"
+            >
+              <Box variant="basic" padding="0 s 0 0">
+                <Text variant="p">network:</Text>
+                <Text variant="p">address:</Text>
+                <Text variant="p">DID:</Text>
+                <Text variant="p">uID:</Text>
+              </Box>
+              <div>
+                <Text variant="p" format="b1m">
+                  {network.name.toUpperCase()}
+                </Text>
+                <Text variant="p" format="b1m">
+                  {account.address}
+                </Text>
+                <Text variant="p" format="b1m">
+                  {did}
+                </Text>
+                <Text variant="p" format="b1m">
+                  {hasUid ? 'Has uID' : 'Does not have uID'}
+                </Text>
+              </div>
+            </Grid>
 
-      {network.name !== 'itn' && (
-        <div>
-          <button onClick={provideUidFromDid}>
-            Generate a dummy uID and import it to Polymesh wallet
-          </button>
-        </div>
-      )}
+            <Flex variant="basic" padding="0">
+              {network.name !== 'itn' && (
+                <Button
+                  variant="primary"
+                  onClick={provideUidFromDid}
+                  margin="0 s 0 0"
+                >
+                  Generate a dummy uID and import it to Polymesh wallet
+                </Button>
+              )}
 
-      {hasUid && (
-        <div>
-          <button onClick={readUid}>Read uID from Polymesh wallet</button>
-        </div>
-      )}
+              {hasUid && (
+                <Button variant="secondary" onClick={readUid}>
+                  Read uID from Polymesh wallet
+                </Button>
+              )}
+            </Flex>
 
-      <hr />
+            <Box variant="basic" margin="l 0 0 0" padding="0">
+              <Flex variant="basic" padding="0" margin="0 0 m">
+                <Input
+                  variant="basic"
+                  placeholder="uID"
+                  value={inputUid}
+                  onChange={updateInputUid}
+                  margin="0 s 0 0"
+                />
+                <Button variant="special" onClick={provideInputUid}>
+                  Enter uID and import it to Polymesh wallet
+                </Button>
+              </Flex>
 
-      <div>
-        <input
-          type="text"
-          placeholder="uID"
-          value={inputUid}
-          onChange={updateInputUid}
-        />
-        <button onClick={provideInputUid}>
-          Enter uID and import it to Polymesh wallet
-        </button>
-      </div>
+              {hasUid && (
+                <Flex variant="basic" padding="0">
+                  <Input
+                    variant="basic"
+                    placeholder="Ticker"
+                    value={ticker}
+                    onChange={updateTicker}
+                    margin="0 s 0 0"
+                  />
+                  <Button variant="special" onClick={generateProof}>
+                    Use stored uID to generate proof
+                  </Button>
+                </Flex>
+              )}
+            </Box>
 
-      {hasUid && (
-        <div>
-          <input
-            type="text"
-            placeholder="Ticker"
-            value={ticker}
-            onChange={updateTicker}
-          />
-          <button onClick={generateProof}>
-            Use stored uID to generate proof
-          </button>
-        </div>
-      )}
-
-      {message && <pre>{message}</pre>}
-      {error && <pre>{error}</pre>}
-    </>
-  ) : (
-    <h3>Initializing...</h3>
+            {message?.text &&
+              (message.isError ? (
+                <Text variant="p" color="danger" margin="l 0 0">
+                  {message.text}
+                </Text>
+              ) : (
+                <CodeText
+                  variant="p"
+                  format="code"
+                  margin="l 0 0"
+                  color="success"
+                >
+                  <pre>{message.text}</pre>
+                </CodeText>
+              ))}
+          </>
+        ) : (
+          <Heading variant="h1">Loading...</Heading>
+        )}
+      </Box>
+    </PolyThemeProvider>
   );
 }
