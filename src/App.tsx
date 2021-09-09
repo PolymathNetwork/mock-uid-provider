@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, ChangeEvent } from 'react';
 import {
   InjectedAccountWithMeta,
   InjectedExtension,
@@ -23,6 +23,7 @@ export function App() {
   const [api, setApi] = useState<ApiPromise>();
   const [did, setDid] = useState<string>();
   const [hasUid, setHasUid] = useState(false);
+  const [inputUid, setInputUid] = useState('');
 
   const provideUidFromDid = async () => {
     if (!wallet || !did) return;
@@ -40,7 +41,7 @@ export function App() {
       .provide({
         uid,
         did,
-        network,
+        network: network?.name,
       })
       .catch((error: any) => {
         console.error(error);
@@ -53,7 +54,22 @@ export function App() {
       console.error(error);
     });
 
-    alert(uid ? uid : 'uID not found');
+    alert(uid ? `uID: ${uid}` : 'uID not found');
+  };
+
+  const provideInputUid = async () => {
+    // @ts-ignore
+    wallet.uid
+      .provide({
+        uid: inputUid,
+        did,
+        network: network?.name,
+      })
+      .catch((error: any) => console.error(error));
+  };
+
+  const updateInputUid = (event: ChangeEvent<HTMLInputElement>) => {
+    setInputUid(event.target.value);
   };
 
   // Connect Polymesh wallet and set account on mount
@@ -144,8 +160,22 @@ export function App() {
           <button onClick={readUid}>Read uID from Polymesh wallet</button>
         </div>
       )}
+
+      <hr />
+
+      <div>
+        <input
+          type="text"
+          placeholder="Enter uID"
+          value={inputUid}
+          onChange={updateInputUid}
+        />
+        <button onClick={provideInputUid}>
+          Enter uID and import it to Polymesh wallet
+        </button>
+      </div>
     </>
   ) : (
-    <h1>Loading...</h1>
+    <h3>Initializing...</h3>
   );
 }
