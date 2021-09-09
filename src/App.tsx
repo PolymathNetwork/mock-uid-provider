@@ -3,13 +3,18 @@ import {
   InjectedAccountWithMeta,
   InjectedExtension,
 } from '@polkadot/extension-inject/types';
-import { connectPolymeshWallet, createApi, getSelectedAccount } from './api';
 import { NetworkMeta } from './types';
-import { web3AccountsSubscribe } from '@polkadot/extension-dapp';
-import { ApiPromise } from '@polkadot/api';
+import {
+  web3Accounts,
+  web3AccountsSubscribe,
+  web3Enable,
+} from '@polkadot/extension-dapp';
+import { ApiPromise, WsProvider } from '@polkadot/api';
 import { Codec } from '@polkadot/types/types';
 import { hexToU8a } from '@polkadot/util';
 import { stringify as uuidStringify } from 'uuid';
+import { polymesh_schema } from './schema';
+import { networkURLs } from './constants';
 
 export function App() {
   const [wallet, setWallet] = useState<InjectedExtension>();
@@ -50,42 +55,54 @@ export function App() {
     alert(uid ? uid : 'uID not found');
   };
 
-  // Connect polymesh wallet on mount
+  // Connect Polymesh wallet and set account on mount
   useEffect(() => {
-    connectPolymeshWallet()
-      .then((polyWallet) => setWallet(polyWallet))
-      .catch((error) => console.error(error));
+    const connectPolymeshWallet = async () => {
+      const extensions = await web3Enable('Mock uID Provider');
+      const polyWallet = extensions.find(
+        (extension) => extension.name === 'polywallet'
+      );
+
+      if (!polyWallet) throw new Error('Polymesh wallet not found');
+
+      setWallet(polyWallet);
+
+      // @ts-ignore
+      polyWallet.network.get().then((network) => setNetwork(network));
+      // @ts-ignore
+      polyWallet.network.subscribe((network) => setNetwork(network));
+    };
+
+    const getSelectedAccount = async () => {
+      const accounts = await web3Accounts();
+
+      if (accounts.length === 0)
+        throw new Error('No accounts found in Polymesh wallet');
+
+      setAccount(accounts[0]);
+
+      web3AccountsSubscribe((accounts) => {
+        if (accounts.length) setAccount(accounts[0]);
+      });
+    };
+
+    connectPolymeshWallet().then(getSelectedAccount);
   }, []);
 
-  // Set selected account and subscribe to account changes
-  useEffect(() => {
-    if (!wallet) return;
-
-    // @ts-ignore
-    wallet.network.get().then((network) => setNetwork(network));
-    // @ts-ignore
-    wallet.network.subscribe((network) => setNetwork(network));
-
-    getSelectedAccount()
-      .then((account) => setAccount(account))
-      .catch((error) => console.error(error));
-
-    web3AccountsSubscribe((accounts) => {
-      if (accounts.length) setAccount(accounts[0]);
-    });
-  }, [wallet]);
-
-  // Initialize Polkadot API on network changes
+  // Initialize/re-initialize Polkadot API on network changes
   useEffect(() => {
     if (!network) return;
 
     setApi(undefined);
     setDid(undefined);
 
-    createApi(network.name).then((api) => {
-      setApi(api);
-      setNetwork(network);
+    const apiPromise = new ApiPromise({
+      provider: new WsProvider(networkURLs[network.name]),
+      types: polymesh_schema.types,
+      rpc: polymesh_schema.rpc,
     });
+
+    apiPromise.isReady.then((api) => setApi(api));
   }, [network]);
 
   // Set DID
@@ -103,17 +120,21 @@ export function App() {
 
   return api && network && account ? (
     <>
-      <h2>network: {network.name}</h2>
-      <h2>address: {account.address}</h2>
-      <h2>DID: {did}</h2>
+      <div>network: {network.name}</div>
+      <div>address: {account.address}</div>
+      <div>DID: {did}</div>
 
       {network.name !== 'itn' && (
-        <button onClick={provideUidFromDid}>
-          Generate a dummy uID and import it to Polymesh wallet
-        </button>
+        <div>
+          <button onClick={provideUidFromDid}>
+            Generate a dummy uID and import it to Polymesh wallet
+          </button>
+        </div>
       )}
 
-      <button onClick={readUid}>Read uID from Polymesh wallet</button>
+      <div>
+        <button onClick={readUid}>Read uID from Polymesh wallet</button>
+      </div>
     </>
   ) : (
     <h1>Loading...</h1>
