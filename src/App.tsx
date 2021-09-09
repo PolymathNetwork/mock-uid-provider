@@ -21,13 +21,13 @@ export function App() {
   const provideUidFromDid = async () => {
     if (!wallet || !did) return;
 
-    console.log('Generating uID...');
+    // console.log('Generating uID...');
 
     const crypto = await import('@polymathnetwork/confidential-identity');
     const mockUIdHex = `0x${crypto.process_create_mocked_investor_uid(did)}`;
     const uid = uuidStringify(hexToU8a(mockUIdHex));
 
-    console.log('>>> uid', uid);
+    // console.log('>>> uid', uid);
 
     // @ts-ignore
     wallet.uid
@@ -43,9 +43,11 @@ export function App() {
 
   const readUid = async () => {
     // @ts-ignore
-    const uid = await wallet.uid.read();
+    const { uid } = await wallet.uid.read().catch((error) => {
+      console.error(error);
+    });
 
-    console.log({ uid });
+    alert(uid ? uid : 'uID not found');
   };
 
   // Connect polymesh wallet on mount
@@ -101,8 +103,8 @@ export function App() {
 
   return api && network && account ? (
     <>
-      <h2>Network: {network.name}</h2>
-      <h2>Account: {account.address}</h2>
+      <h2>network: {network.name}</h2>
+      <h2>address: {account.address}</h2>
       <h2>DID: {did}</h2>
 
       {network.name !== 'itn' && (
@@ -111,7 +113,7 @@ export function App() {
         </button>
       )}
 
-      <button onClick={readUid}>Read uID</button>
+      <button onClick={readUid}>Read uID from Polymesh wallet</button>
     </>
   ) : (
     <h1>Loading...</h1>
