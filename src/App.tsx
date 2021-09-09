@@ -8,6 +8,8 @@ import { NetworkMeta } from './types';
 import { web3AccountsSubscribe } from '@polkadot/extension-dapp';
 import { ApiPromise } from '@polkadot/api';
 import { Codec } from '@polkadot/types/types';
+import { hexToU8a } from '@polkadot/util';
+import { stringify as uuidStringify } from 'uuid';
 
 export function App() {
   const [wallet, setWallet] = useState<InjectedExtension>();
@@ -15,6 +17,29 @@ export function App() {
   const [account, setAccount] = useState<InjectedAccountWithMeta>();
   const [api, setApi] = useState<ApiPromise>();
   const [did, setDid] = useState<string>();
+
+  const provideUidFromDid = async () => {
+    if (!wallet || !did) return;
+
+    console.log('Generating uID...');
+
+    const crypto = await import('@polymathnetwork/confidential-identity');
+    const mockUIdHex = `0x${crypto.process_create_mocked_investor_uid(did)}`;
+    const uid = uuidStringify(hexToU8a(mockUIdHex));
+
+    console.log('>>> uid', uid);
+
+    // @ts-ignore
+    wallet.uid
+      .provide({
+        uid,
+        did,
+        network,
+      })
+      .catch((error: any) => {
+        console.error(error);
+      });
+  };
 
   // Connect polymesh wallet on mount
   useEffect(() => {
@@ -67,11 +92,17 @@ export function App() {
       });
   }, [api, account]);
 
-  return api ? (
+  return api && network && account ? (
     <>
-      <h2>Network: {network?.name}</h2>
-      <h2>Account: {account?.address}</h2>
+      <h2>Network: {network.name}</h2>
+      <h2>Account: {account.address}</h2>
       <h2>DID: {did}</h2>
+
+      {network.name !== 'itn' && (
+        <button onClick={provideUidFromDid}>
+          Generate a dummy uID and import it to Polymesh wallet
+        </button>
+      )}
     </>
   ) : (
     <h1>Loading...</h1>
