@@ -41,6 +41,13 @@ export function App() {
       });
   };
 
+  const readUid = async () => {
+    // @ts-ignore
+    const uid = await wallet.uid.read();
+
+    console.log({ uid });
+  };
+
   // Connect polymesh wallet on mount
   useEffect(() => {
     connectPolymeshWallet()
@@ -103,6 +110,8 @@ export function App() {
           Generate a dummy uID and import it to Polymesh wallet
         </button>
       )}
+
+      <button onClick={readUid}>Read uID</button>
     </>
   ) : (
     <h1>Loading...</h1>
