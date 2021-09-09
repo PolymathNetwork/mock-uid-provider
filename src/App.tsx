@@ -24,6 +24,7 @@ export function App() {
   const [did, setDid] = useState<string>();
   const [hasUid, setHasUid] = useState(false);
   const [inputUid, setInputUid] = useState('');
+  const [ticker, setTicker] = useState('');
 
   const provideUidFromDid = async () => {
     if (!wallet || !did) return;
@@ -68,8 +69,22 @@ export function App() {
       .catch((error: any) => console.error(error));
   };
 
+  const generateProof = async () => {
+    // @ts-ignore
+    wallet.uid
+      .requestProof({ ticker })
+      .then((data: any) => {
+        alert(data);
+      })
+      .catch((error: any) => console.error(error));
+  };
+
   const updateInputUid = (event: ChangeEvent<HTMLInputElement>) => {
     setInputUid(event.target.value);
+  };
+
+  const updateTicker = (event: ChangeEvent<HTMLInputElement>) => {
+    setTicker(event.target.value);
   };
 
   // Connect Polymesh wallet and set account on mount
@@ -172,6 +187,18 @@ export function App() {
         />
         <button onClick={provideInputUid}>
           Enter uID and import it to Polymesh wallet
+        </button>
+      </div>
+
+      <div>
+        <input
+          type="text"
+          placeholder="Ticker"
+          value={ticker}
+          onChange={updateTicker}
+        />
+        <button onClick={generateProof}>
+          Use stored uID to generate proof
         </button>
       </div>
     </>
