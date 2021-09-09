@@ -16,20 +16,6 @@ export function App() {
   const [api, setApi] = useState<ApiPromise>();
   const [did, setDid] = useState<string>();
 
-  const onNetworkChange = async (network: NetworkMeta) => {
-    setApi(undefined);
-    setDid(undefined);
-
-    const api = await createApi(network.name);
-
-    setApi(api);
-    setNetwork(network);
-  };
-
-  const onAccountChange = (account: InjectedAccountWithMeta) => {
-    setAccount(account);
-  };
-
   // Connect polymesh wallet on mount
   useEffect(() => {
     connectPolymeshWallet()
@@ -42,19 +28,31 @@ export function App() {
     if (!wallet) return;
 
     // @ts-ignore
-    wallet.network.get().then(onNetworkChange);
-
+    wallet.network.get().then((network) => setNetwork(network));
     // @ts-ignore
-    wallet.network.subscribe(onNetworkChange);
+    wallet.network.subscribe((network) => setNetwork(network));
 
     getSelectedAccount()
-      .then(onAccountChange)
+      .then((account) => setAccount(account))
       .catch((error) => console.error(error));
 
     web3AccountsSubscribe((accounts) => {
-      if (accounts.length) onAccountChange(accounts[0]);
+      if (accounts.length) setAccount(accounts[0]);
     });
   }, [wallet]);
+
+  // Initialize Polkadot API on network changes
+  useEffect(() => {
+    if (!network) return;
+
+    setApi(undefined);
+    setDid(undefined);
+
+    createApi(network.name).then((api) => {
+      setApi(api);
+      setNetwork(network);
+    });
+  }, [network]);
 
   // Set DID
   useEffect(() => {
