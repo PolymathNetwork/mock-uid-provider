@@ -25,17 +25,15 @@ export function App() {
   const [hasUid, setHasUid] = useState(false);
   const [inputUid, setInputUid] = useState('');
   const [ticker, setTicker] = useState('');
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
 
   const provideUidFromDid = async () => {
     if (!wallet || !did) return;
 
-    // console.log('Generating uID...');
-
     const crypto = await import('@polymathnetwork/confidential-identity');
     const mockUIdHex = `0x${crypto.process_create_mocked_investor_uid(did)}`;
     const uid = uuidStringify(hexToU8a(mockUIdHex));
-
-    // console.log('>>> uid', uid);
 
     // @ts-ignore
     wallet.uid
@@ -45,17 +43,17 @@ export function App() {
         network: network?.name,
       })
       .catch((error: any) => {
-        console.error(error);
+        setError(error.message);
       });
   };
 
   const readUid = async () => {
     // @ts-ignore
     const { uid } = await wallet.uid.read().catch((error) => {
-      console.error(error);
+      setError(error.message);
     });
 
-    alert(uid ? `uID: ${uid}` : 'uID not found');
+    setMessage(uid ? `uID: ${uid}` : 'uID not found');
   };
 
   const provideInputUid = async () => {
@@ -66,17 +64,18 @@ export function App() {
         did,
         network: network?.name,
       })
-      .catch((error: any) => console.error(error));
+      .then(() => setMessage('uID successfully imported to Polymesh wallet'))
+      .catch((error: any) => setError(error.message));
   };
 
   const generateProof = async () => {
     // @ts-ignore
     wallet.uid
       .requestProof({ ticker })
-      .then((data: any) => {
-        alert(data);
+      .then((proof: Object) => {
+        setMessage(JSON.stringify(proof, null, 2));
       })
-      .catch((error: any) => console.error(error));
+      .catch((error: any) => setError(error.message));
   };
 
   const updateInputUid = (event: ChangeEvent<HTMLInputElement>) => {
@@ -137,7 +136,7 @@ export function App() {
     apiPromise.isReady.then((api) => setApi(api));
   }, [network]);
 
-  // Set DID and check if uID is set
+  // Set DID and check if uID is set on account changes
   useEffect(() => {
     if (!api || !account || !wallet) return;
 
@@ -154,6 +153,14 @@ export function App() {
       setHasUid(hasUid);
     });
   }, [api, account, wallet]);
+
+  // Clear messages, errors, and inputs on certain state changes
+  useEffect(() => {
+    setMessage('');
+    setError('');
+    setInputUid('');
+    setTicker('');
+  }, [api, account, wallet, network]);
 
   return api && network && account ? (
     <>
@@ -181,7 +188,7 @@ export function App() {
       <div>
         <input
           type="text"
-          placeholder="Enter uID"
+          placeholder="uID"
           value={inputUid}
           onChange={updateInputUid}
         />
@@ -190,17 +197,22 @@ export function App() {
         </button>
       </div>
 
-      <div>
-        <input
-          type="text"
-          placeholder="Ticker"
-          value={ticker}
-          onChange={updateTicker}
-        />
-        <button onClick={generateProof}>
-          Use stored uID to generate proof
-        </button>
-      </div>
+      {hasUid && (
+        <div>
+          <input
+            type="text"
+            placeholder="Ticker"
+            value={ticker}
+            onChange={updateTicker}
+          />
+          <button onClick={generateProof}>
+            Use stored uID to generate proof
+          </button>
+        </div>
+      )}
+
+      {message && <pre>{message}</pre>}
+      {error && <pre>{error}</pre>}
     </>
   ) : (
     <h3>Initializing...</h3>
