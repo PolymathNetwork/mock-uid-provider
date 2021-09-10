@@ -236,23 +236,21 @@ export function App() {
               </div>
             </Grid>
 
-            <Flex variant="basic" padding="0">
-              {network.name !== 'itn' && (
-                <Button
-                  variant="primary"
-                  onClick={provideUidFromDid}
-                  margin="0 s 0 0"
-                >
-                  Generate a dummy uID and import it to Polymesh wallet
-                </Button>
-              )}
+            {did && network.name !== 'itn' && (
+              <Button
+                variant="primary"
+                onClick={provideUidFromDid}
+                margin="0 s 0 0"
+              >
+                Generate a dummy uID and import it to Polymesh wallet
+              </Button>
+            )}
 
-              {hasUid && (
-                <Button variant="secondary" onClick={readUid}>
-                  Read uID from Polymesh wallet
-                </Button>
-              )}
-            </Flex>
+            {hasUid && (
+              <Button variant="secondary" onClick={readUid}>
+                Read uID from Polymesh wallet
+              </Button>
+            )}
 
             <Box variant="basic" margin="l 0 0 0" padding="0">
               <Flex variant="basic" padding="0" margin="0 0 m">
