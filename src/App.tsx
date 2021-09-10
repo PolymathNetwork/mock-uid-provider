@@ -1,262 +1,320 @@
-import React, { useEffect, useState } from 'react';
-import './App.css';
-import { web3Accounts, web3AccountsSubscribe, web3Enable } from '@polkadot/extension-dapp';
-import { encodeAddress, decodeAddress } from '@polkadot/util-crypto';
+import { useState, useEffect, useMemo, ChangeEvent } from 'react';
+import {
+  InjectedAccountWithMeta,
+  InjectedExtension,
+} from '@polkadot/extension-inject/types';
+import { NetworkMeta } from './types';
+import {
+  web3Accounts,
+  web3AccountsSubscribe,
+  web3Enable,
+} from '@polkadot/extension-dapp';
 import { ApiPromise, WsProvider } from '@polkadot/api';
-import schema from './polymesh_schema.json';
+import { Codec } from '@polkadot/types/types';
 import { hexToU8a } from '@polkadot/util';
 import { stringify as uuidStringify } from 'uuid';
+import { polymesh_schema } from './schema';
 import { networkURLs } from './constants';
-import { InjectedAccountWithMeta } from '@polkadot/extension-inject/types';
+import {
+  polyTheme,
+  Text,
+  Heading,
+  Button,
+  Box,
+  Input,
+  PolyThemeProvider,
+  Grid,
+  Flex,
+  styled,
+} from '@polymathnetwork/ui-blocks';
 
-function App() {
-  const [polyWallet, setPolyWallet] = useState<any>(null);
-  const [proof, setProof] = useState<string>('');
-  const [address, setAddress] = useState<string>('');
-  const [api, setApi] = useState<ApiPromise | undefined>();
-  const [did, setDid] = useState<string | undefined>();
-  const [uidSet, setUidSet] = useState<boolean | undefined>(undefined);
-  const [network, setNetwork] = useState<string | undefined>();
-  const [error, setInternalError] = useState<Error | undefined>();
-  const [ticker, setTicker] = useState<string>('');
-  const [uid, setUid] = useState<string>('');
-  const [importedUid, setImportedUid] = useState<string>('');
-  
+const CodeText = styled(Text)`
+  font-size: 16px;
+`;
 
-  const setError = (error: Error, disappear: boolean = false) => {
-    setInternalError(error);
-    disappear && setTimeout(() => setInternalError(undefined), 3000);
-  }
+type Message = {
+  isError?: boolean;
+  text: string;
+};
 
-  const setDisappearingError = (error: Error) => setError(error, true);
+export function App() {
+  const [wallet, setWallet] = useState<InjectedExtension>();
+  const [network, setNetwork] = useState<NetworkMeta>();
+  const [account, setAccount] = useState<InjectedAccountWithMeta>();
+  const [api, setApi] = useState<ApiPromise>();
+  const [did, setDid] = useState<string>();
+  const [hasUid, setHasUid] = useState(false);
+  const [inputUid, setInputUid] = useState('');
+  const [ticker, setTicker] = useState('');
+  const [message, setMessage] = useState<Message>();
+  const [loadingStep, setLoadingStep] = useState<string>();
 
-  const reset = () => {
-    setDid(undefined);
-    setProof('');
-    setInternalError(undefined);
-    setTicker('');
-    setUid('');
-    setUidSet(undefined);
-  }
+  const provideUidFromDid = async () => {
+    if (!wallet || !did) return;
 
-
-  useEffect(() => {
-    const _accounts = (accounts: InjectedAccountWithMeta[]) => {
-      // @TODO Fractal
-      // Filter accounts based on their source.
-      accounts = accounts.filter(account => account.meta.source === 'polywallet');
-      if (accounts && accounts.length) {
-        console.log('__accounts', accounts);
-        // @TODO Fractal
-        // Recode address with ITN prefix (or Alcyone's, according to selected network).
-        const address = encodeAddress(decodeAddress(accounts[0].address), 12);
-        setAddress(address);
-      }
-      else {
-        setError(new Error('No accounts found in wallet extension'));
-        return;
-      }
-    }
-
-    
-    if (!polyWallet) {
-      (new Promise((resolve) => {
-        // @TODO Fractal
-        // There's a chance the wallet's injected API is not ready as soon as DOM loads.
-        // Force delay web3Enable.
-        setTimeout(() => resolve(null), 1000)
-      })).then(() => {
-        web3Enable('Mock uID Provider').then((exts) => {
-          const meshExts = exts.filter(ext => ext.name === 'polywallet')
-          console.log('>>>> Extension', meshExts)
-
-          if (!meshExts.length) {
-            setError(new Error(`Please install Polymesh wallet extension from Chrome store`));
-            return;
-          }
-
-          const wallet = meshExts[0];
-          setPolyWallet(wallet);
-
-          // @ts-ignore
-          wallet.network.subscribe((network) => {
-            console.log('setNetwork', network.name)
-            setNetwork(network.name);
-          });
-
-          // @ts-ignore
-          wallet.network.get().then(network => setNetwork(network.name));
-
-          // @TODO Fractal
-          // Replace calls to web3AccountsSubscribe and web3Accounts with 
-          // the following calls, respectively.
-          // Note that we cannot specify the ss58Format in this case, so we'll
-          // have to recode addresses before consumption.
-          web3AccountsSubscribe(_accounts);
-          web3Accounts().then(_accounts);
-        })
-      });
-    }
-  }, [polyWallet]);
-
-  useEffect(() => {
-    if (network) {
-      reset();
-
-      const url = networkURLs[network];
-      if (!url) {
-        setError(new Error(`Unknown network: ${network}`));
-      }
-
-
-      const apiPromise = new ApiPromise({
-        provider: new WsProvider(url),
-        types: schema.types,
-        rpc: schema.rpc,
-      });
-
-      apiPromise.isReady.then((api) => {
-        setApi(api);
-      });
-    }
-  }, [ network ])
-
-  useEffect(() => {
-    if (api && address) {
-      api.query.identity.keyToIdentityIds(address).then((linkedKeyInfo: any) => {
-        if (!linkedKeyInfo.isEmpty) {
-          setDid(linkedKeyInfo.toString());
-        }
-      })
-    }
-    
-  }, [ api, address ])
-
-  useEffect(() => {
-    if (!!address && !!network && polyWallet) {
-      polyWallet.uid.isSet().then((data: boolean) => {
-        setUidSet(data)
-      });
-    }
-  }, [address, network, polyWallet])
-
-  const generateProof = (polyWallet: any) => {
-    if (!ticker.length) {
-      setError(new Error('"Ticker" is required'), true);
-      return;
-    }
-    polyWallet.uid.requestProof({ticker })
-      .then((data: any) => {
-        console.log('Data', data);
-        setProof(data.proof);
-      }, setDisappearingError)
-      .catch(setDisappearingError);
-  }
-
-  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    event.preventDefault();
-    setTicker(event.target.value);
-  }
-
-  const handleUidChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    event.preventDefault();
-    setUid(event.target.value);
-  }
-
-  const provideUid = async (polyWallet: any, did: string, uid: string) => {
-    console.log('>>> uid', uid);
-
-    // @TODO Fractal
-    // Make sure to show any errors thrown by uid.provide.
-    polyWallet.uid.provide({
-      uid,
-      did,
-      network
-    }).then(console.log, setDisappearingError).catch(setDisappearingError);
-  }
-
-  const readUid = async (polyWallet: any) => {
-    polyWallet.uid.read()
-      .then((res: {uid: string, id: number}) => setImportedUid(res.uid), setDisappearingError)
-      .catch(setDisappearingError);
-  }
-
-  const provideUidFromDid = async (polyWallet: any, did: string) => {
-    console.log('Generating uID...');
-    const crypto = await import('@polymathnetwork/confidential-identity')
+    const crypto = await import('@polymathnetwork/confidential-identity');
     const mockUIdHex = `0x${crypto.process_create_mocked_investor_uid(did)}`;
     const uid = uuidStringify(hexToU8a(mockUIdHex));
 
-    console.log('>>> uid', uid);
-
-    polyWallet.uid.provide({
-      uid,
-      did,
-      network
-    }).then(console.log, setDisappearingError).catch(setDisappearingError);
-  }
-
-  const isDev = network !== 'itn';
-
-  const Body = () => {
-    if (polyWallet && api) {
-      return (
-        <>
-          <p>
-            Network: {network || 'unknown'}
-          </p>
-          <p>
-            User address: {address || 'unknown'}
-          </p>
-          <p>
-            DID: {did || 'none'}
-          </p>
-          { uidSet !== undefined && <p>
-            UID: {uidSet ? 'true' : 'false'}
-          </p> }
-          {importedUid && <p>
-            UID value: {importedUid}
-          </p> }
-          { did && 
-          <>
-            { isDev && <button  onClick={() => provideUidFromDid(polyWallet, did)}>
-                Generate a dummy uID and import it to Polymesh wallet
-              </button>
-            }
-            <p>
-              <button onClick={() => readUid(polyWallet)}>Read uId from wallet</button>
-
-            </p>
-
-            <p>
-              <input name='uid' value={uid} type='text' onChange={handleUidChange} />
-              <button onClick={() => provideUid(polyWallet, did, uid)}>Enter uID and import it to Polymesh wallet</button>
-            </p>
-            <p>
-              <input name='ticker' value={ticker} type='text' onChange={handleChange} />
-              <button onClick={() => generateProof(polyWallet)}>Use stored uID to generate proof</button>
-            </p>
-          </>
-          } <br />
-          { proof && <span>Proof: {JSON.stringify(proof, null, 3)} </span> }
-          { error && <span>{error.message}</span>}
-        </>
+    // @ts-ignore
+    wallet.uid
+      .provide({
+        uid,
+        did,
+        network: network?.name,
+      })
+      .then(() =>
+        setMessage({ text: 'uID successfully imported to Polymesh wallet' })
       )
-    }
-    else if (error) {
-      return <span>{error.message}</span>
-    }
-    return <div>Initalizing API instance ...</div>;
-  }
+      .catch((error: any) => {
+        setMessage({
+          isError: true,
+          text: error.message,
+        });
+      });
+  };
+
+  const readUid = () => {
+    // @ts-ignore
+    wallet.uid
+      .read()
+      .then((uid: any) => setMessage({ text: `uID: ${uid.uid}` }))
+      .catch((error: any) => {
+        setMessage({
+          isError: true,
+          text: error.message,
+        });
+      });
+  };
+
+  const provideInputUid = async () => {
+    // @ts-ignore
+    wallet.uid
+      .provide({
+        uid: inputUid,
+        did,
+        network: network?.name,
+      })
+      .then(() =>
+        setMessage({ text: 'uID successfully imported to Polymesh wallet' })
+      )
+      .catch((error: any) =>
+        setMessage({
+          isError: true,
+          text: error.message,
+        })
+      );
+  };
+
+  const generateProof = async () => {
+    // @ts-ignore
+    wallet.uid
+      .requestProof({ ticker })
+      .then((proof: Object) => {
+        setMessage({ text: JSON.stringify(proof, null, 2) });
+      })
+      .catch((error: any) =>
+        setMessage({
+          isError: true,
+          text: error.message,
+        })
+      );
+  };
+
+  const updateInputUid = (event: ChangeEvent<HTMLInputElement>) => {
+    setInputUid(event.target.value);
+  };
+
+  const updateTicker = (event: ChangeEvent<HTMLInputElement>) => {
+    setTicker(event.target.value);
+  };
+
+  const isAppReady = useMemo(
+    () => !!(wallet && network && account && api),
+    [account, api, network, wallet]
+  );
+
+  // Connect Polymesh wallet and set account on mount
+  useEffect(() => {
+    const connectPolymeshWallet = async () => {
+      const extensions = await web3Enable('Mock uID Provider');
+      const polyWallet = extensions.find(
+        (extension) => extension.name === 'polywallet'
+      );
+
+      if (!polyWallet) throw new Error('Polymesh wallet not found');
+
+      setWallet(polyWallet);
+
+      // @ts-ignore
+      polyWallet.network.get().then((network) => setNetwork(network));
+      // @ts-ignore
+      polyWallet.network.subscribe((network) => setNetwork(network));
+    };
+
+    const getSelectedAccount = async () => {
+      const accounts = await web3Accounts();
+
+      if (accounts.length === 0)
+        throw new Error('No accounts found in Polymesh wallet');
+
+      setAccount(accounts[0]);
+
+      web3AccountsSubscribe((accounts) => {
+        if (accounts.length) setAccount(accounts[0]);
+      });
+    };
+
+    setLoadingStep('Connecting to Polymesh wallet...');
+    connectPolymeshWallet().then(getSelectedAccount);
+  }, []);
+
+  // Initialize/re-initialize Polkadot API on network changes
+  useEffect(() => {
+    if (!network) return;
+
+    setApi(undefined);
+    setDid(undefined);
+    setLoadingStep('Initializing Polkadot API...');
+
+    const apiPromise = new ApiPromise({
+      provider: new WsProvider(networkURLs[network.name]),
+      types: polymesh_schema.types,
+      rpc: polymesh_schema.rpc,
+    });
+
+    apiPromise.isReady.then((api) => setApi(api));
+  }, [network]);
+
+  // Set DID and check if uID is set on account changes
+  useEffect(() => {
+    if (!api || !account || !wallet) return;
+
+    api.query.identity
+      .keyToIdentityIds(account.address)
+      .then((value: unknown) => {
+        const codec = value as Codec;
+
+        setDid(codec.isEmpty ? undefined : codec.toString());
+      });
+
+    // @ts-ignore
+    wallet.uid.isSet().then((hasUid: boolean) => {
+      setHasUid(hasUid);
+    });
+  }, [api, account, wallet]);
+
+  // Clear messages, errors, and inputs on certain state changes
+  useEffect(() => {
+    setMessage(undefined);
+    setInputUid('');
+    setTicker('');
+  }, [api, account, wallet, network]);
+
+  // Clear loading step message
+  useEffect(() => {
+    if (isAppReady) setLoadingStep(undefined);
+  }, [isAppReady]);
 
   return (
-    <div className="App">
-      <header className="App-header">
-        <Body />
-      </header>
-    </div> 
-  );
-  
-}
+    <PolyThemeProvider theme={polyTheme}>
+      <Box variant="basic">
+        {isAppReady ? (
+          <>
+            <Grid
+              variant="basic"
+              margin="0 0 l"
+              padding="0"
+              cols="min-content auto"
+            >
+              <Box variant="basic" padding="0 s 0 0">
+                <Text variant="p">network:</Text>
+                <Text variant="p">address:</Text>
+                <Text variant="p">DID:</Text>
+                <Text variant="p">uID:</Text>
+              </Box>
+              <div>
+                <Text variant="p" format="b1m">
+                  {network?.name.toUpperCase()}
+                </Text>
+                <Text variant="p" format="b1m">
+                  {account?.address}
+                </Text>
+                <Text variant="p" format="b1m">
+                  {did}
+                </Text>
+                <Text variant="p" format="b1m">
+                  {hasUid ? 'Has uID' : 'Does not have uID'}
+                </Text>
+              </div>
+            </Grid>
 
-export default App;
+            {did && network?.name !== 'itn' && (
+              <Button
+                variant="primary"
+                onClick={provideUidFromDid}
+                margin="0 s 0 0"
+              >
+                Generate a dummy uID and import it to Polymesh wallet
+              </Button>
+            )}
+
+            {hasUid && (
+              <Button variant="secondary" onClick={readUid}>
+                Read uID from Polymesh wallet
+              </Button>
+            )}
+
+            <Box variant="basic" margin="l 0 0 0" padding="0">
+              <Flex variant="basic" padding="0" margin="0 0 m">
+                <Input
+                  variant="basic"
+                  placeholder="uID"
+                  value={inputUid}
+                  onChange={updateInputUid}
+                  margin="0 s 0 0"
+                />
+                <Button variant="special" onClick={provideInputUid}>
+                  Enter uID and import it to Polymesh wallet
+                </Button>
+              </Flex>
+
+              {hasUid && (
+                <Flex variant="basic" padding="0">
+                  <Input
+                    variant="basic"
+                    placeholder="Ticker"
+                    value={ticker}
+                    onChange={updateTicker}
+                    margin="0 s 0 0"
+                  />
+                  <Button variant="special" onClick={generateProof}>
+                    Use stored uID to generate proof
+                  </Button>
+                </Flex>
+              )}
+            </Box>
+
+            {message?.text &&
+              (message.isError ? (
+                <Text variant="p" color="danger" margin="l 0 0">
+                  {message.text}
+                </Text>
+              ) : (
+                <CodeText
+                  variant="p"
+                  format="code"
+                  margin="l 0 0"
+                  color="success"
+                >
+                  <pre>{message.text}</pre>
+                </CodeText>
+              ))}
+          </>
+        ) : (
+          <Heading variant="h3">{loadingStep}</Heading>
+        )}
+      </Box>
+    </PolyThemeProvider>
+  );
+}
