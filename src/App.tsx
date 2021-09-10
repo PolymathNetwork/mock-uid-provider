@@ -1,4 +1,4 @@
-import { useState, useEffect, ChangeEvent } from 'react';
+import { useState, useEffect, useMemo, ChangeEvent } from 'react';
 import {
   InjectedAccountWithMeta,
   InjectedExtension,
@@ -47,6 +47,7 @@ export function App() {
   const [inputUid, setInputUid] = useState('');
   const [ticker, setTicker] = useState('');
   const [message, setMessage] = useState<Message>();
+  const [loadingStep, setLoadingStep] = useState<string>();
 
   const provideUidFromDid = async () => {
     if (!wallet || !did) return;
@@ -128,6 +129,11 @@ export function App() {
     setTicker(event.target.value);
   };
 
+  const isAppReady = useMemo(
+    () => !!(wallet && network && account && api),
+    [account, api, network, wallet]
+  );
+
   // Connect Polymesh wallet and set account on mount
   useEffect(() => {
     const connectPolymeshWallet = async () => {
@@ -159,6 +165,7 @@ export function App() {
       });
     };
 
+    setLoadingStep('Connecting to Polymesh wallet...');
     connectPolymeshWallet().then(getSelectedAccount);
   }, []);
 
@@ -168,6 +175,7 @@ export function App() {
 
     setApi(undefined);
     setDid(undefined);
+    setLoadingStep('Initializing Polkadot API...');
 
     const apiPromise = new ApiPromise({
       provider: new WsProvider(networkURLs[network.name]),
@@ -203,10 +211,15 @@ export function App() {
     setTicker('');
   }, [api, account, wallet, network]);
 
+  // Clear loading step message
+  useEffect(() => {
+    if (isAppReady) setLoadingStep(undefined);
+  }, [isAppReady]);
+
   return (
     <PolyThemeProvider theme={polyTheme}>
       <Box variant="basic">
-        {api && network && account ? (
+        {isAppReady ? (
           <>
             <Grid
               variant="basic"
@@ -222,10 +235,10 @@ export function App() {
               </Box>
               <div>
                 <Text variant="p" format="b1m">
-                  {network.name.toUpperCase()}
+                  {network?.name.toUpperCase()}
                 </Text>
                 <Text variant="p" format="b1m">
-                  {account.address}
+                  {account?.address}
                 </Text>
                 <Text variant="p" format="b1m">
                   {did}
@@ -236,7 +249,7 @@ export function App() {
               </div>
             </Grid>
 
-            {did && network.name !== 'itn' && (
+            {did && network?.name !== 'itn' && (
               <Button
                 variant="primary"
                 onClick={provideUidFromDid}
@@ -299,7 +312,7 @@ export function App() {
               ))}
           </>
         ) : (
-          <Heading variant="h1">Loading...</Heading>
+          <Heading variant="h3">{loadingStep}</Heading>
         )}
       </Box>
     </PolyThemeProvider>
