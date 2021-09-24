@@ -241,7 +241,7 @@ export function App() {
                   {account?.address}
                 </Text>
                 <Text variant="p" format="b1m">
-                  {did}
+                  {did || 'Does not have DID'}
                 </Text>
                 <Text variant="p" format="b1m">
                   {hasUid ? 'Has uID' : 'Does not have uID'}
