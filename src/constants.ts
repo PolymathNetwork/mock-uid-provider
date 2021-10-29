@@ -1,6 +1,6 @@
 export const networkURLs: Record<string, string> = {
-  alcyone: 'wss://alcyone-rpc.polymesh.live',
+  testnet: 'wss://testnet-rpc.polymesh.live',
   pmf: 'wss://pmf.polymath.network',
   pme: 'wss://pme.polymath.network',
-  itn: 'wss://itn-rpc.polymesh.live',
+  local: 'ws://localhost:9944',
 };
