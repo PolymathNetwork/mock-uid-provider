@@ -1,7 +1,7 @@
 {
   "files": {
-    "main.js": "/mock-uid-provider/static/js/main.3eaaa93f.chunk.js",
-    "main.js.map": "/mock-uid-provider/static/js/main.3eaaa93f.chunk.js.map",
+    "main.js": "/mock-uid-provider/static/js/main.38806786.chunk.js",
+    "main.js.map": "/mock-uid-provider/static/js/main.38806786.chunk.js.map",
     "runtime-main.js": "/mock-uid-provider/static/js/runtime-main.30175cc5.js",
     "runtime-main.js.map": "/mock-uid-provider/static/js/runtime-main.30175cc5.js.map",
     "static/css/2.c1d0b518.chunk.css": "/mock-uid-provider/static/css/2.c1d0b518.chunk.css",
@@ -271,6 +271,6 @@
     "static/js/runtime-main.30175cc5.js",
     "static/css/2.c1d0b518.chunk.css",
     "static/js/2.80934322.chunk.js",
-    "static/js/main.3eaaa93f.chunk.js"
+    "static/js/main.38806786.chunk.js"
   ]
 }
