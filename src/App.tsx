@@ -25,12 +25,7 @@ import {
   PolyThemeProvider,
   Grid,
   Flex,
-  styled,
 } from '@polymathnetwork/ui-blocks';
-
-const CodeText = styled(Text)`
-  font-size: 16px;
-`;
 
 type Message = {
   isError?: boolean;
@@ -217,7 +212,7 @@ export function App() {
   }, [isAppReady]);
 
   return (
-    <PolyThemeProvider theme={polyTheme}>
+    <PolyThemeProvider theme={polyTheme.pink}>
       <Box variant="basic">
         {isAppReady ? (
           <>
@@ -228,22 +223,30 @@ export function App() {
               cols="min-content auto"
             >
               <Box variant="basic" padding="0 s 0 0">
-                <Text variant="p">network:</Text>
-                <Text variant="p">address:</Text>
-                <Text variant="p">DID:</Text>
-                <Text variant="p">uID:</Text>
+                <Text as="p" variant="b1">
+                  network:
+                </Text>
+                <Text as="p" variant="b1">
+                  address:
+                </Text>
+                <Text as="p" variant="b1">
+                  DID:
+                </Text>
+                <Text as="p" variant="b1">
+                  uID:
+                </Text>
               </Box>
               <div>
-                <Text variant="p" format="b1m">
+                <Text as="p" variant="b1m">
                   {network?.name.toUpperCase()}
                 </Text>
-                <Text variant="p" format="b1m">
+                <Text as="p" variant="b1m">
                   {account?.address}
                 </Text>
-                <Text variant="p" format="b1m">
+                <Text as="p" variant="b1m">
                   {did || 'Does not have DID'}
                 </Text>
-                <Text variant="p" format="b1m">
+                <Text as="p" variant="b1m">
                   {hasUid ? 'Has uID' : 'Does not have uID'}
                 </Text>
               </div>
@@ -297,18 +300,13 @@ export function App() {
 
             {message?.text &&
               (message.isError ? (
-                <Text variant="p" color="danger" margin="l 0 0">
+                <Text as="p" variant="c1" color="danger" margin="l 0 0">
                   {message.text}
                 </Text>
               ) : (
-                <CodeText
-                  variant="p"
-                  format="code"
-                  margin="l 0 0"
-                  color="success"
-                >
-                  <pre>{message.text}</pre>
-                </CodeText>
+                <Text as="p" variant="c1" margin="l 0 0" color="success">
+                  {message.text}
+                </Text>
               ))}
           </>
         ) : (
