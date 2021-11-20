@@ -150,6 +150,8 @@ export function App() {
     const getSelectedAccount = async () => {
       const accounts = await web3Accounts();
 
+      console.log(accounts);
+
       if (accounts.length === 0)
         throw new Error('No accounts found in Polymesh wallet');
 
@@ -227,6 +229,9 @@ export function App() {
                   network:
                 </Text>
                 <Text as="p" variant="b1">
+                  name:
+                </Text>
+                <Text as="p" variant="b1">
                   address:
                 </Text>
                 <Text as="p" variant="b1">
@@ -239,6 +244,9 @@ export function App() {
               <div>
                 <Text as="p" variant="b1m">
                   {network?.name.toUpperCase()}
+                </Text>
+                <Text as="p" variant="b1m">
+                  {account?.meta.name}
                 </Text>
                 <Text as="p" variant="b1m">
                   {account?.address}
