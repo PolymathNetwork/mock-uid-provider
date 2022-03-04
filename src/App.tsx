@@ -27,13 +27,18 @@ import {
   Flex,
 } from '@polymathnetwork/ui-blocks';
 
+type PolymeshWalletExtension = InjectedExtension & {
+  network: any;
+  uid: any;
+};
+
 type Message = {
   isError?: boolean;
   text: string;
 };
 
 export function App() {
-  const [wallet, setWallet] = useState<InjectedExtension>();
+  const [wallet, setWallet] = useState<PolymeshWalletExtension>();
   const [network, setNetwork] = useState<NetworkMeta>();
   const [account, setAccount] = useState<InjectedAccountWithMeta>();
   const [api, setApi] = useState<ApiPromise>();
@@ -51,7 +56,6 @@ export function App() {
     const mockUIdHex = `0x${crypto.process_create_mocked_investor_uid(did)}`;
     const uid = uuidStringify(hexToU8a(mockUIdHex));
 
-    // @ts-ignore
     wallet.uid
       .provide({
         uid,
@@ -70,8 +74,7 @@ export function App() {
   };
 
   const readUid = () => {
-    // @ts-ignore
-    wallet.uid
+    wallet?.uid
       .read()
       .then((uid: any) => setMessage({ text: `uID: ${uid.uid}` }))
       .catch((error: any) => {
@@ -83,8 +86,7 @@ export function App() {
   };
 
   const provideInputUid = async () => {
-    // @ts-ignore
-    wallet.uid
+    wallet?.uid
       .provide({
         uid: inputUid,
         did,
@@ -102,8 +104,7 @@ export function App() {
   };
 
   const generateProof = async () => {
-    // @ts-ignore
-    wallet.uid
+    wallet?.uid
       .requestProof({ ticker })
       .then((proof: Object) => {
         setMessage({ text: JSON.stringify(proof, null, 2) });
@@ -132,23 +133,28 @@ export function App() {
   // Connect Polymesh wallet and set account on mount
   useEffect(() => {
     const connectPolymeshWallet = async () => {
-      const extensions = await web3Enable('Mock uID Provider');
-      const polyWallet = extensions.find(
-        (extension) => extension.name === 'polywallet'
-      );
+      const extensions = (await web3Enable(
+        'Mock uID Provider'
+      )) as PolymeshWalletExtension[];
+
+      const polyWallet = extensions.find(({ name }) => name === 'polywallet');
 
       if (!polyWallet) throw new Error('Polymesh wallet not found');
 
       setWallet(polyWallet);
 
-      // @ts-ignore
-      polyWallet.network.get().then((network) => setNetwork(network));
-      // @ts-ignore
-      polyWallet.network.subscribe((network) => setNetwork(network));
+      polyWallet.network
+        .get()
+        .then((network: NetworkMeta) => setNetwork(network));
+      polyWallet.network.subscribe((network: NetworkMeta) =>
+        setNetwork(network)
+      );
     };
 
     const getSelectedAccount = async () => {
-      const accounts = await web3Accounts();
+      const accounts = (await web3Accounts()).filter(
+        ({ meta }) => meta.source === 'polywallet'
+      );
 
       console.log(accounts);
 
@@ -195,7 +201,6 @@ export function App() {
         setDid(codec.isEmpty ? undefined : codec.toString());
       });
 
-    // @ts-ignore
     wallet.uid.isSet().then((hasUid: boolean) => {
       setHasUid(hasUid);
     });
