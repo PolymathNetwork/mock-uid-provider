@@ -145,9 +145,10 @@ export function App() {
 
       polyWallet.network
         .get()
-        .then((network: NetworkMeta) => setNetwork(network));
-      polyWallet.network.subscribe((network: NetworkMeta) =>
-        setNetwork(network)
+        .then((_network: NetworkMeta) => setNetwork(_network));
+
+      polyWallet.network.subscribe((_network: NetworkMeta) =>
+        setNetwork(_network)
       );
     };
 
@@ -163,8 +164,8 @@ export function App() {
 
       setAccount(accounts[0]);
 
-      web3AccountsSubscribe((accounts) => {
-        if (accounts.length) setAccount(accounts[0]);
+      web3AccountsSubscribe((_accounts) => {
+        if (_accounts.length) setAccount(_accounts[0]);
       });
     };
 
@@ -186,7 +187,7 @@ export function App() {
       rpc: polymesh_schema.rpc,
     });
 
-    apiPromise.isReady.then((api) => setApi(api));
+    apiPromise.isReady.then((_api) => setApi(_api));
   }, [network]);
 
   // Set DID and check if uID is set on account changes
@@ -201,8 +202,8 @@ export function App() {
         setDid(codec.isEmpty ? undefined : codec.toString());
       });
 
-    wallet.uid.isSet().then((hasUid: boolean) => {
-      setHasUid(hasUid);
+    wallet.uid.isSet().then((_hasUid: boolean) => {
+      setHasUid(_hasUid);
     });
   }, [api, account, wallet]);
 
