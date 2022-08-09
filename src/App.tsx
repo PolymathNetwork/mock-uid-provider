@@ -13,7 +13,7 @@ import { ApiPromise, WsProvider } from '@polkadot/api';
 import { Codec } from '@polkadot/types/types';
 import { hexToU8a } from '@polkadot/util';
 import { stringify as uuidStringify } from 'uuid';
-import { polymesh_schema } from './schema';
+import { polymesh_schema, schemaService } from './schema';
 import { networkURLs } from './constants';
 import {
   polyTheme,
@@ -181,13 +181,17 @@ export function App() {
     setDid(undefined);
     setLoadingStep('Initializing Polkadot API...');
 
-    const apiPromise = new ApiPromise({
-      provider: new WsProvider(networkURLs[network.name]),
-      types: polymesh_schema.types,
-      rpc: polymesh_schema.rpc,
-    });
+    schemaService(network.name).then(({ rpc, types }) => {
+      console.log({ rpc, types });
 
-    apiPromise.isReady.then((_api) => setApi(_api));
+      const apiPromise = new ApiPromise({
+        provider: new WsProvider(networkURLs[network.name]),
+        rpc,
+        types,
+      });
+
+      apiPromise.isReady.then((_api) => setApi(_api));
+    });
   }, [network]);
 
   // Set DID and check if uID is set on account changes
@@ -266,7 +270,7 @@ export function App() {
               </div>
             </Grid>
 
-            {did && network?.name !== 'itn' && (
+            {did && (
               <Button
                 variant="primary"
                 onClick={provideUidFromDid}

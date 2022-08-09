@@ -1,9 +1,8 @@
 export enum NetworkName {
-  pmf = 'pmf',
-  alcyone = 'alcyone',
-  pme = 'pme',
+  mainnet = 'mainnet',
+  testnet = 'testnet',
+  staging = 'staging',
   local = 'local',
-  itn = 'itn',
 }
 
 export type NetworkMeta = {

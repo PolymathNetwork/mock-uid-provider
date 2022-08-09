@@ -1,3 +1,21 @@
+import axios from 'axios';
+import { polySchemaUrls } from './constants';
+import { NetworkName } from './types';
+
+export async function schemaService(network: NetworkName) {
+  try {
+    const { data } = await axios.get(polySchemaUrls[network]);
+
+    return {
+      rpc: data.rpc,
+      types: data.types,
+    };
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+}
+
 export const polymesh_schema = {
   types: {
     AccountInfo: 'AccountInfoWithRefCount',
